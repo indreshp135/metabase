@@ -91,8 +91,7 @@
 (defn- upload-file
   "Upload a file to SFTPGo through the API."
   [access-token file url file-name subscription-name date]
-  (let [headers {"Authorization" (str "Bearer " access-token)
-                 "Content-Type" "text/csv"}
+  (let [headers {"Authorization" (str "Bearer " access-token)}
         response (http/post (str url "/api/v2/user/files/upload")
                             {:headers headers
                              :query-params
@@ -141,3 +140,31 @@
                     (io/file (:content file)))]
       (println "Uploading file: " file-buffer "with type" type "and name" file-name)
       (upload-file-to-sftpgo file-buffer file-name subscription-name date))))
+
+
+(defn get-folder-tree
+  "Get the folder tree from SFTPGo."
+  [path]
+  (let [url (setting/get :sftpgo-auth-url)
+        username (setting/get :sftpgo-auth-username)
+        password (setting/get :sftpgo-auth-password)
+        access-token (get-access-token username password url)
+        headers {"Authorization" (str "Bearer " access-token)}
+        response (http/get (str url "/api/v2/user/dirs")
+                           {:headers headers
+                            :query-params {:path path}})
+        body (json/parse-string (:body response))]
+    (if (empty? body)
+      {:name "Root", :isFolder true, :items []}
+      (let [;; Get the folders and files
+            ;; Folder object will not have a "size" field
+            folders (filter #(not (contains? % "size")) body)
+            files (filter #(contains? % "size") body)
+            folder-items (map (fn [folder]
+                                (let [name (get folder "name")
+                                      new-path (str path "/" name)]
+                                  (assoc folder :items (get-folder-tree new-path) :isFolder true))) folders)]
+        {:name (str "Root" path),
+         :isFolder true,
+         :items (concat folder-items (map (fn [file]
+                                            (assoc file :isFolder false :items [])) files))}))))

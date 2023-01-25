@@ -11,12 +11,10 @@
 #_{:clj-kondo/ignore [:deprecated-var]}
 (api/defendpoint-schema PUT "/settings"
   "Update SFTPGo related settings. You must be a superuser or have `setting` permission to do this."
-  [:as {{:keys [
-                sftpgo-auth-url
+  [:as {{:keys [sftpgo-auth-url
                 sftpgo-auth-enabled
                 sftpgo-auth-username
-                sftpgo-auth-password
-  ]} :body}]
+                sftpgo-auth-password]} :body}]
   {sftpgo-auth-url                         (s/maybe s/Str)
    sftpgo-auth-enabled                     (s/maybe s/Bool)
    sftpgo-auth-username                    (s/maybe s/Str)
@@ -27,5 +25,11 @@
                        :sftpgo-auth-password                    sftpgo-auth-password})
    (sftpgo/sftpgo-auth-enabled! sftpgo-auth-enabled)))
 
+
+#_{:clj-kondo/ignore [:deprecated-var]}
+(api/defendpoint GET "/get-folder-tree"
+  "Get the folder tree from SFTPGo"
+  []
+  (sftpgo/get-folder-tree "."))
 
 (api/define-routes)
