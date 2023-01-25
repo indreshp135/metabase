@@ -6,6 +6,7 @@ import { t } from "ttag";
 import { PLUGIN_DASHBOARD_SUBSCRIPTION_PARAMETERS_SECTION_OVERRIDE } from "metabase/plugins";
 import { dashboardPulseIsValid } from "metabase/lib/pulse";
 import Input from "metabase/core/components/Input";
+import Select from "metabase/core/components/Select";
 import Icon from "metabase/components/Icon";
 import Toggle from "metabase/core/components/Toggle";
 import SchedulePicker from "metabase/containers/SchedulePicker";
@@ -61,6 +62,27 @@ function _AddEditSFTPGoSidebar({
             value={channel.subscription_name}
             onChange={e =>
               onChannelPropertyChange("subscription_name", e.target.value)
+            }
+          />
+        </div>
+        <div className="my2">
+          <div className="text-bold mb1">{t`Date Time Format:`}</div>
+          <Select
+            type="text"
+            className="full"
+            options={[
+              { name: "empty", value: "" },
+              { name: "YYYY-MM-DD HH:mm:ss", value: "YYYY-MM-DD HH:mm:ss" },
+              { name: "YYYY-MM-DD", value: "YYYY-MM-DD" },
+              { name: "HH:mm:ss", value: "HH:mm:ss" },
+            ]}
+            defaultValue={""}
+            value={channel.subscription_date_time_format}
+            onChange={e =>
+              onChannelPropertyChange(
+                "subscription_date_time_format",
+                e.target.value,
+              )
             }
           />
         </div>

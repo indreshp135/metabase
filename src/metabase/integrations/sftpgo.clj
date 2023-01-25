@@ -90,25 +90,27 @@
 ;; Then, define a function to upload a file
 (defn- upload-file
   "Upload a file to SFTPGo through the API."
-  [access-token file url file-name subscription-name]
-  (let [date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd|HH:mm:ss") (java.util.Date.))
-        headers {"Authorization" (str "Bearer " access-token)
+  [access-token file url file-name subscription-name date]
+  (let [headers {"Authorization" (str "Bearer " access-token)
                  "Content-Type" "text/csv"}
         response (http/post (str url "/api/v2/user/files/upload")
                             {:headers headers
-                             :query-params {:path (str subscription-name "_" (str date) "/" file-name) :mkdir_parents true}
+                             :query-params
+                             {:path
+                              (if (= date "")
+                                (str subscription-name "/" file-name)
+                                (str subscription-name "_" (str date) "/" file-name)) :mkdir_parents true}
                              :body file})]
     (json/parse-string (:body response))))
 
-
 (defn- upload-file-to-sftpgo
   "Upload a file to SFTPGo."
-  [file file-name subscription-name]
+  [file file-name subscription-name date]
   (let [username (setting/get :sftpgo-auth-username)
         password (setting/get :sftpgo-auth-password)
         url (setting/get :sftpgo-auth-url)
         access-token (get-access-token username password url)]
-    (upload-file access-token file url file-name subscription-name)))
+    (upload-file access-token file url file-name subscription-name date)))
 
 (defn string-to-html-file
   "Convert a string to a html file."
@@ -126,7 +128,9 @@
     (let
      [type (:type file)
       file-name (if (= (:type file) "text/html; charset=utf-8")
-                  (str subject "_" (str date)  ".html")
+                  (if (= date "")
+                    (str subject ".html")
+                    (str subject "_" (str date)  ".html"))
                   ;; Check if file-name is nil 
                   (if (not (:file-name file))
                     (str (:content-id file))
@@ -134,7 +138,6 @@
       file-buffer (if (= type "text/html; charset=utf-8")
                     (string-to-html-file (:content file))
                     ;;(io/input-stream (str (:content file)))
-                    (io/file (:content file)))
-      ]
+                    (io/file (:content file)))]
       (println "Uploading file: " file-buffer "with type" type "and name" file-name)
-      (upload-file-to-sftpgo file-buffer file-name subscription-name))))
+      (upload-file-to-sftpgo file-buffer file-name subscription-name date))))

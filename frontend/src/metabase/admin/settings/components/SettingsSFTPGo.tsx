@@ -87,7 +87,9 @@ const SFTPGoAuthForm = ({
             {...getFormFieldProps(settings[SFTPGO_PASSWORD])}
           />
           <FormSubmitButton
-            title={settings[ENABLED_KEY] ? t`Save changes` : t`Save and enable`}
+            title={
+              settings[ENABLED_KEY].value ? t`Save changes` : t`Save and enable`
+            }
             primary
             disabled={!dirty}
           />

@@ -258,6 +258,7 @@ const SECTIONS = updateSectionsWithPlugins({
         key: "sftpgo-auth-enabled",
         display_name: t`SFTPGo Enabled`,
         type: "boolean",
+        required: true,
       },
     ],
     adminOnly: true,

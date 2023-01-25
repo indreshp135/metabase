@@ -326,7 +326,7 @@
 (defmethod notification [:pulse :sftpgo]
   [{pulse-id :id, pulse-name :name, dashboard-id :dashboard_id, :as pulse}
    results
-   {:keys [subscription_name]}]
+   {:keys [subscription_name subscription_date_time_format]}]
   (log/debug (u/format-color 'cyan (trs "Sending Pulse ({0}: {1}) with {2} Cards via SFTPGo"
                                         pulse-id (pr-str pulse-name) (count results))))
 
@@ -336,6 +336,7 @@
         files (sftpgo.files/render-pulse-sftpgo timezone pulse dashboard results)]
     {:files files
      :subject (subject pulse)
+     :subscription_date_time_format subscription_date_time_format
      :sftpgo-subsription-name subscription_name}))
 
 (defmethod notification [:alert :email]
@@ -415,9 +416,9 @@
 
 
 (defmethod send-notification! :sftpgo
-  [{:keys [files sftpgo-subsription-name subject]}]
+  [{:keys [files sftpgo-subsription-name subject subscription_date_time_format]}]
   (try
-    (let [date (.format (java.text.SimpleDateFormat. "dd-mm-yyyy|HH-mm-ss") (java.util.Date.))]
+    (let [date (.format (java.text.SimpleDateFormat. (str subscription_date_time_format)) (java.util.Date.))]
     (sftpgo/send-file-or-throw! files sftpgo-subsription-name subject date))
     (catch ExceptionInfo e
       (when (not= :sftpgo-host-not-set (:cause (ex-data e)))
