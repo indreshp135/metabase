@@ -10,6 +10,7 @@ import PulsesListSidebar from "metabase/sharing/components/PulsesListSidebar";
 import {
   AddEditSlackSidebar,
   AddEditEmailSidebar,
+  AddEditSFTPGoSidebar,
 } from "metabase/sharing/components/AddEditSidebar/AddEditSidebar";
 import LoadingAndErrorWrapper from "metabase/components/LoadingAndErrorWrapper";
 import Sidebar from "metabase/dashboard/components/Sidebar";
@@ -359,17 +360,60 @@ class SharingSidebarInner extends React.Component {
       );
     }
 
+    if (editingMode === "add-edit-sftpgo") {
+      const channelDetails = pulse.channels
+        .map((c, i) => [c, i])
+        .filter(([c, i]) => c.enabled && c.channel_type === "sftpgo");
+
+      // protection from a failure where the channels aren't loaded yet
+      if (channelDetails.length === 0) {
+        return <Sidebar />;
+      }
+
+      const [channel, index] = channelDetails[0];
+      const channelSpec = formInput.channels.sftpgo;
+
+      return (
+        <AddEditSFTPGoSidebar
+          pulse={pulse}
+          formInput={formInput}
+          channel={channel}
+          channelSpec={channelSpec}
+          handleSave={this.handleSave}
+          onCancel={this.onCancel}
+          onChannelPropertyChange={_.partial(
+            this.onChannelPropertyChange,
+            index,
+          )}
+          onChannelScheduleChange={_.partial(
+            this.onChannelScheduleChange,
+            index,
+          )}
+          testPulse={testPulse}
+          toggleSkipIfEmpty={this.toggleSkipIfEmpty}
+          setPulse={this.setPulse}
+          users={users}
+          handleArchive={this.handleArchive}
+          dashboard={dashboard}
+          setPulseParameters={this.setPulseParameters}
+        />
+      );
+    }
+
     if (editingMode === "new-pulse" || pulses.length === 0) {
       const { configured: emailConfigured = false } =
         formInput.channels.email || {};
       const { configured: slackConfigured = false } =
         formInput.channels.slack || {};
+      const { configured: sftpgoConfigured = false } =
+        formInput.channels.sftpgo || {};
 
       return (
         <NewPulseSidebar
           onCancel={this.onCancel}
           emailConfigured={emailConfigured}
           slackConfigured={slackConfigured}
+          sftpgoConfigured={sftpgoConfigured}
           onNewEmailPulse={() => {
             if (emailConfigured) {
               this.setState(({ returnMode }) => {
@@ -390,6 +434,17 @@ class SharingSidebarInner extends React.Component {
                 };
               });
               this.setPulseWithChannel("slack");
+            }
+          }}
+          onNewSFTPGOPulse={() => {
+            if (sftpgoConfigured) {
+              this.setState(({ returnMode }) => {
+                return {
+                  editingMode: "add-edit-sftpgo",
+                  returnMode: returnMode.concat([editingMode]),
+                };
+              });
+              this.setPulseWithChannel("sftpgo");
             }
           }}
         />

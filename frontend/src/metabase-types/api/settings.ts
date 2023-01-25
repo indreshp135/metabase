@@ -178,6 +178,10 @@ export interface Settings {
   "google-auth-client-id": string | null;
   "google-auth-configured": boolean;
   "google-auth-enabled": boolean;
+  "sftpgo-auth-enabled": boolean;
+  "sftpgo-auth-username": string | null;
+  "sftpgo-auth-password": string | null;
+  "sftpgo-auth-url": string | null;
   "has-user-setup": boolean;
   "hide-embed-branding?": boolean;
   "is-hosted?": boolean;

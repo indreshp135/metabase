@@ -6,6 +6,7 @@
    [metabase.config :as config]
    [metabase.email :as email]
    [metabase.email.messages :as messages]
+   [metabase.integrations.sftpgo :as sftpgo]
    [metabase.integrations.slack :as slack]
    [metabase.models.card :refer [Card]]
    [metabase.models.dashboard :refer [Dashboard]]
@@ -23,6 +24,7 @@
    [metabase.query-processor.dashboard :as qp.dashboard]
    [metabase.query-processor.timezone :as qp.timezone]
    [metabase.server.middleware.session :as mw.session]
+   [metabase.sftpgo.files :as sftpgo.files]
    [metabase.util :as u]
    [metabase.util.i18n :refer [deferred-tru trs tru]]
    [metabase.util.retry :as retry]
@@ -240,7 +242,7 @@
   (let [goal-comparison      (if alert_above_goal >= <)
         goal-val             (ui-logic/find-goal-value first-result)
         comparison-col-rowfn (ui-logic/make-goal-comparison-rowfn (:card first-result)
-                                                            (get-in first-result [:result :data]))]
+                                                                  (get-in first-result [:result :data]))]
 
     (when-not (and goal-val comparison-col-rowfn)
       (throw (ex-info (tru "Unable to compare results to goal for alert.")
@@ -320,6 +322,22 @@
                                     (create-slack-attachment-data results)
                                     (when dashboard (slack-dashboard-footer pulse dashboard))]))}))
 
+;; for SFTPGo, we need to send the file to the server
+(defmethod notification [:pulse :sftpgo]
+  [{pulse-id :id, pulse-name :name, dashboard-id :dashboard_id, :as pulse}
+   results
+   {:keys [subscription_name]}]
+  (log/debug (u/format-color 'cyan (trs "Sending Pulse ({0}: {1}) with {2} Cards via SFTPGo"
+                                        pulse-id (pr-str pulse-name) (count results))))
+
+  (let [query-results    (filter :card results)
+        timezone         (-> query-results first :card defaulted-timezone)
+        dashboard        (db/select-one Dashboard :id dashboard-id)
+        files (sftpgo.files/render-pulse-sftpgo timezone pulse dashboard results)]
+    {:files files
+     :subject (subject pulse)
+     :sftpgo-subsription-name subscription_name}))
+
 (defmethod notification [:alert :email]
   [{:keys [id] :as pulse} results channel]
   (log/debug (trs "Sending Alert ({0}: {1}) via email" id name))
@@ -382,8 +400,8 @@
 (defmulti ^:private send-notification!
   "Invokes the side-effecty function for sending emails/slacks depending on the notification type"
   {:arglists '([pulse-or-alert])}
-  (fn [{:keys [channel-id]}]
-    (if channel-id :slack :email)))
+  (fn [{:keys [channel-id files]}]
+    (if files :sftpgo (if channel-id :slack :email))))
 
 (defmethod send-notification! :slack
   [{:keys [channel-id message attachments]}]
@@ -394,6 +412,16 @@
         ;; Token errors have already been logged and we should not retry.
         (when-not (contains? (:errors (ex-data e)) :slack-token)
           (throw e))))))
+
+
+(defmethod send-notification! :sftpgo
+  [{:keys [files sftpgo-subsription-name subject]}]
+  (try
+    (let [date (.format (java.text.SimpleDateFormat. "dd-mm-yyyy|HH-mm-ss") (java.util.Date.))]
+    (sftpgo/send-file-or-throw! files sftpgo-subsription-name subject date))
+    (catch ExceptionInfo e
+      (when (not= :sftpgo-host-not-set (:cause (ex-data e)))
+        (throw e)))))
 
 (defmethod send-notification! :email
   [{:keys [subject recipients message-type message]}]

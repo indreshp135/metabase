@@ -13990,6 +13990,21 @@ databaseChangeLog:
             constraintName: fk_action_creator_id
             nullable: false
 
+  - changeSet:
+      id: v46.00-062
+      author: indreshp135
+      comment: Added 0.46.0 -- Add new column to store the sftpgo subscription name to pulse_channel table
+      changes:
+        - addColumn:
+            tableName: pulse_channel
+            columns:
+              - column:
+                  name: subscription_name
+                  type: varchar(255)
+                  remarks: The name of the subscription
+                  constraints:
+                    nullable: true
+
 # >>>>>>>>>> DO NOT ADD NEW MIGRATIONS BELOW THIS LINE! ADD THEM ABOVE <<<<<<<<<<
 
 ########################################################################################################################

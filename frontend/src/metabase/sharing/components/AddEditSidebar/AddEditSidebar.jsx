@@ -6,6 +6,7 @@ import {
 } from "metabase/dashboard/selectors";
 import _AddEditEmailSidebar from "./AddEditEmailSidebar";
 import _AddEditSlackSidebar from "./AddEditSlackSidebar";
+import _AddEditSFTPGoSidebar from "./AddEditSFTPGoSidebar";
 
 const mapStateToProps = (state, props) => {
   return {
@@ -18,3 +19,6 @@ export const AddEditEmailSidebar =
   connect(mapStateToProps)(_AddEditEmailSidebar);
 export const AddEditSlackSidebar =
   connect(mapStateToProps)(_AddEditSlackSidebar);
+export const AddEditSFTPGoSidebar = connect(mapStateToProps)(
+  _AddEditSFTPGoSidebar,
+);

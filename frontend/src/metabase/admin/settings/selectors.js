@@ -31,6 +31,7 @@ import SettingsUpdatesForm from "./components/SettingsUpdatesForm/SettingsUpdate
 import SettingsEmailForm from "./components/SettingsEmailForm";
 import SettingsSetupList from "./components/SettingsSetupList";
 import SlackSettings from "./slack/containers/SlackSettings";
+import SFTPGoAuthForm from "./components/SettingsSFTPGo";
 import { trackTrackingPermissionChanged } from "./analytics";
 
 import EmbeddingOption from "./components/widgets/EmbeddingOption";
@@ -224,15 +225,52 @@ const SECTIONS = updateSectionsWithPlugins({
     component: SlackSettings,
     settings: [],
   },
+  SFTPGo: {
+    name: "SFTPGo",
+    order: 6,
+    component: SFTPGoAuthForm,
+    settings: [
+      {
+        key: "sftpgo-auth-url",
+        display_name: t`SFTPGo URL`,
+        placeholder: "http://localhost:8080",
+        type: "string",
+        required: true,
+        autoFocus: true,
+      },
+      {
+        key: "sftpgo-auth-user",
+        display_name: t`SFTPGo User`,
+        placeholder: "admin",
+        type: "string",
+        required: true,
+        autoFocus: true,
+      },
+      {
+        key: "sftpgo-auth-password",
+        display_name: t`SFTPGo Password`,
+        placeholder: "admin",
+        type: "password",
+        required: true,
+        autoFocus: true,
+      },
+      {
+        key: "sftpgo-auth-enabled",
+        display_name: t`SFTPGo Enabled`,
+        type: "boolean",
+      },
+    ],
+    adminOnly: true,
+  },
   authentication: {
     name: t`Authentication`,
-    order: 6,
+    order: 7,
     settings: [], // added by plugins
     adminOnly: true,
   },
   maps: {
     name: t`Maps`,
-    order: 7,
+    order: 13,
     settings: [
       {
         key: "map-tile-server-url",

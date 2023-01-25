@@ -8,6 +8,7 @@
    [metabase.api.common :as api]
    [metabase.api.common.validation :as validation]
    [metabase.email :as email]
+   [metabase.integrations.sftpgo :as sftpgo]
    [metabase.integrations.slack :as slack]
    [metabase.models.card :refer [Card]]
    [metabase.models.collection :as collection]
@@ -117,14 +118,14 @@
                     :collection_id       collection_id
                     :collection_position collection_position
                     :dashboard_id        dashboard_id
-                    :parameters          parameters}]
+                    :parameters          parameters}] 
     (db/transaction
       ;; Adding a new pulse at `collection_position` could cause other pulses in this collection to change position,
       ;; check that and fix it if needed
-      (api/maybe-reconcile-collection-position! pulse-data)
+     (api/maybe-reconcile-collection-position! pulse-data)
       ;; ok, now create the Pulse
-      (api/check-500
-       (pulse/create-pulse! (map pulse/card->ref cards) channels pulse-data)))))
+     (api/check-500
+      (pulse/create-pulse! (map pulse/card->ref cards) channels pulse-data)))))
 
 #_{:clj-kondo/ignore [:deprecated-var]}
 (api/defendpoint-schema GET "/:id"
@@ -166,9 +167,9 @@
    parameters    [su/Map]}
   ;; do various perms checks
   (try
-   (validation/check-has-application-permission :monitoring)
-   (catch clojure.lang.ExceptionInfo _e
-     (validation/check-has-application-permission :subscription false)))
+    (validation/check-has-application-permission :monitoring)
+    (catch clojure.lang.ExceptionInfo _e
+      (validation/check-has-application-permission :subscription false)))
 
   (let [pulse-before-update (api/write-check (pulse/retrieve-pulse id))]
     (check-card-read-permissions cards)
@@ -209,6 +210,7 @@
   []
   (validation/check-has-application-permission :subscription false)
   (let [chan-types (-> channel-types
+                       (assoc-in [:sftpgo :configured] (sftpgo/sftpgo-configured?))
                        (assoc-in [:slack :configured] (slack/slack-configured?))
                        (assoc-in [:email :configured] (email/email-configured?)))]
     {:channels (cond
@@ -314,7 +316,7 @@
   (api/let-404 [pulse-id (db/select-one-id Pulse :id id)
                 pc-id    (db/select-one-id PulseChannel :pulse_id pulse-id :channel_type "email")
                 pcr-id   (db/select-one-id PulseChannelRecipient :pulse_channel_id pc-id :user_id api/*current-user-id*)]
-    (db/delete! PulseChannelRecipient :id pcr-id))
+               (db/delete! PulseChannelRecipient :id pcr-id))
   api/generic-204-no-content)
 
 (api/define-routes)

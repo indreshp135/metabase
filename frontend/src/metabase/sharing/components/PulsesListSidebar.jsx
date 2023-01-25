@@ -86,11 +86,13 @@ function _PulsesListSidebar({
                     name={
                       pulse.channels[0].channel_type === "email"
                         ? "mail"
-                        : "slack"
+                        : pulse.channels[0].channel_type === "slack"
+                        ? "slack"
+                        : "sftp"
                     }
                     className="mr1"
                     style={{ paddingBottom: "5px" }}
-                    size={16}
+                    size={32}
                   />
                   <Label className="hover-child hover--inherit">
                     {friendlySchedule(pulse.channels[0])}

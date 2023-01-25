@@ -35,7 +35,8 @@
    [metabase.api.segment :as api.segment]
    [metabase.api.session :as api.session]
    [metabase.api.setting :as api.setting]
-   [metabase.api.setup :as api.setup]
+   [metabase.api.setup :as api.setup] 
+   [metabase.api.sftpgo :as api.sftpgo]
    [metabase.api.slack :as api.slack]
    [metabase.api.table :as api.table]
    [metabase.api.task :as api.task]
@@ -98,6 +99,7 @@
   (context "/setting"              [] (+auth api.setting/routes))
   (context "/setup"                [] api.setup/routes)
   (context "/slack"                [] (+auth api.slack/routes))
+  (context "/sftpgo"               [] (+auth api.sftpgo/routes))
   (context "/table"                [] (+auth api.table/routes))
   (context "/task"                 [] (+auth api.task/routes))
   (context "/testing"              [] (if (or (not config/is-prod?)

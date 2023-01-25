@@ -14,8 +14,10 @@ function NewPulseSidebar({
   onCancel,
   emailConfigured,
   slackConfigured,
+  sftpgoConfigured,
   onNewEmailPulse,
   onNewSlackPulse,
+  onNewSFTPGOPulse,
 }) {
   return (
     <Sidebar onCancel={onCancel}>
@@ -66,8 +68,8 @@ function NewPulseSidebar({
         </ChannelCard>
         <ChannelCard
           flat
-          className={cx({
-            "hover-parent hover--inherit": slackConfigured,
+          className={cx("mt1 mb3", {
+            "hover-parent hover--inherit": emailConfigured,
           })}
           isConfigured={slackConfigured}
           onClick={onNewSlackPulse}
@@ -103,6 +105,45 @@ function NewPulseSidebar({
             </Text>
           </div>
         </ChannelCard>
+        <ChannelCard
+          flat
+          className={cx({
+            "hover-parent hover--inherit": sftpgoConfigured,
+          })}
+          isConfigured={sftpgoConfigured}
+          onClick={onNewSFTPGOPulse}
+        >
+          <div className="px3 pt3 pb2">
+            <div className="flex align-center mb1">
+              <Icon
+                name={sftpgoConfigured ? "sftpgo" : "sftpgo"}
+                size={24}
+                className={cx("mr1", {
+                  "text-light": !sftpgoConfigured,
+                  "hover-child hover--inherit": sftpgoConfigured,
+                })}
+              />
+              <h3
+                className={cx({ "text-light": !sftpgoConfigured })}
+              >{t`Send it to SFTPGo`}</h3>
+            </div>
+            <Text
+              lineHeight={1.5}
+              className={cx("text-medium", {
+                "hover-child hover--inherit": sftpgoConfigured,
+              })}
+            >
+              {!sftpgoConfigured &&
+                jt`First, you'll have to ${(
+                  <Link key="link" to="/admin/settings/SFTPGo" className="link">
+                    {t`configure SFTPGo`}
+                  </Link>
+                )}.`}
+              {sftpgoConfigured &&
+                t`Pick a channel and a schedule, and Metabase will do the rest.`}
+            </Text>
+          </div>
+        </ChannelCard>
       </div>
     </Sidebar>
   );
@@ -112,8 +153,10 @@ NewPulseSidebar.propTypes = {
   onCancel: PropTypes.func.isRequired,
   emailConfigured: PropTypes.bool.isRequired,
   slackConfigured: PropTypes.bool.isRequired,
+  sftpgoConfigured: PropTypes.bool.isRequired,
   onNewEmailPulse: PropTypes.func.isRequired,
   onNewSlackPulse: PropTypes.func.isRequired,
+  onNewSFTPGOPulse: PropTypes.func.isRequired,
 };
 
 export default NewPulseSidebar;

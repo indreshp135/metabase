@@ -446,7 +446,8 @@
                          :enabled        (:enabled new-channel)
                          :channel_type   (keyword (:channel_type new-channel))
                          :schedule_type  (keyword (:schedule_type new-channel))
-                         :schedule_frame (keyword (:schedule_frame new-channel))))]
+                         :schedule_frame (keyword (:schedule_frame new-channel)) 
+                         :subscription_name (keyword (:subscription_name new-channel))))]
     (cond
       ;; 1. in channels, NOT in db-channels = CREATE
       (and channel (not existing-channel))  (pulse-channel/create-pulse-channel! channel)

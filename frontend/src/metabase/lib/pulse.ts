@@ -41,6 +41,8 @@ export function channelIsValid(channel: Channel, channelSpec: ChannelSpec) {
         fieldsAreValid(channel, channelSpec) &&
         scheduleIsValid(channel)
       );
+    case "sftpgo":
+      return true;
     default:
       return false;
   }

@@ -10,6 +10,7 @@ import {
   SlackApi,
   LdapApi,
   GoogleApi,
+  SFTPApi,
 } from "metabase/services";
 import { refreshSiteSettings } from "metabase/redux/settings";
 
@@ -131,6 +132,19 @@ export const updateSlackSettings = createThunkAction(
     };
   },
   {},
+);
+
+export const UPDATE_SFTPGO_SETTINGS =
+  "metabase/admin/settings/UPDATE_SFTP_SETTINGS";
+export const updateSFTPGoSettings = createThunkAction(
+  UPDATE_SFTPGO_SETTINGS,
+  function (settings) {
+    return async function (dispatch) {
+      const result = await SFTPApi.updateSettings(settings);
+      await dispatch(reloadSettings());
+      return result;
+    };
+  },
 );
 
 export const UPDATE_LDAP_SETTINGS =
