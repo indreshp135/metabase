@@ -147,7 +147,7 @@ function _AddEditSFTPGoSidebar({
             channelSpecs={formInput.channels}
             pulse={pulse}
             testPulse={testPulse}
-            normalText={t`Upload File now`}
+            normalText={t`Upload Files now`}
             successText={t`File Uploaded`}
             disabled={!isValid}
           />

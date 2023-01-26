@@ -199,9 +199,6 @@
   PulseChannel
   {:hydration-keys (constantly [:pulse_channel])
    :types          (constantly {:details        :json
-                                :subscription_name :keyword
-                                :subscription_folder_path :keyword
-                                :subscription_date_time_format :keyword
                                 :channel_type   :keyword
                                 :schedule_type  :keyword
                                 :schedule_frame :keyword})

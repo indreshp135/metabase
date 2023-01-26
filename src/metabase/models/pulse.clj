@@ -447,9 +447,9 @@
                          :channel_type   (keyword (:channel_type new-channel))
                          :schedule_type  (keyword (:schedule_type new-channel))
                          :schedule_frame (keyword (:schedule_frame new-channel)) 
-                         :subscription_date_time_format (keyword (:subscription_date_time_format new-channel))
-                         :subscription_folder_path (keyword (:subscription_folder_path new-channel))
-                         :subscription_name (keyword (:subscription_name new-channel))))]
+                         :subscription_date_time_format  (:subscription_date_time_format new-channel)
+                         :subscription_folder_path (:subscription_folder_path new-channel)
+                         :subscription_name (:subscription_name new-channel)))]
     (cond
       ;; 1. in channels, NOT in db-channels = CREATE
       (and channel (not existing-channel))  (pulse-channel/create-pulse-channel! channel)
