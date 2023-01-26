@@ -200,6 +200,7 @@
   {:hydration-keys (constantly [:pulse_channel])
    :types          (constantly {:details        :json
                                 :subscription_name :keyword
+                                :subscription_folder_path :keyword
                                 :subscription_date_time_format :keyword
                                 :channel_type   :keyword
                                 :schedule_type  :keyword
@@ -329,7 +330,7 @@
 (defn create-pulse-channel!
   "Create a new `PulseChannel` along with all related data associated with the channel such as
   `PulseChannelRecipients`."
-  [{:keys [channel_type details enabled pulse_id recipients schedule_type schedule_day schedule_hour schedule_frame subscription_name subscription_date_time_format]
+  [{:keys [channel_type details enabled pulse_id recipients schedule_type schedule_day schedule_hour schedule_frame subscription_name subscription_date_time_format subscription_folder_path]
     :or   {details          {}
            recipients       []}}]
   {:pre [(channel-type? channel_type)
@@ -353,6 +354,7 @@
                                                    schedule_day)
 
                                  :subscription_name subscription_name
+                                 :subscription_folder_path subscription_folder_path
                                  :subscription_date_time_format subscription_date_time_format
                                  :schedule_frame (when (= schedule_type :monthly)
                                                    schedule_frame))]

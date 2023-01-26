@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import _ from "underscore";
 import { t } from "ttag";
@@ -13,9 +13,11 @@ import SchedulePicker from "metabase/containers/SchedulePicker";
 import Sidebar from "metabase/dashboard/components/Sidebar";
 import EmailAttachmentPicker from "metabase/sharing/components/EmailAttachmentPicker";
 import SendTestPulse from "metabase/components/SendTestPulse";
+import { SFTPApi } from "metabase/services";
 import DeleteSubscriptionAction from "./DeleteSubscriptionAction";
 import DefaultParametersSection from "./DefaultParametersSection";
 import CaveatMessage from "./CaveatMessage";
+import FolderTree from "./SFTPGoFile/FolderTree";
 import Heading from "./Heading";
 import { CHANNEL_NOUN_PLURAL } from "./constants";
 
@@ -41,6 +43,14 @@ function _AddEditSFTPGoSidebar({
   setPulseParameters,
 }) {
   const isValid = dashboardPulseIsValid(pulse, formInput.channels);
+  const [explorer, setExplorer] = useState([]);
+
+  useEffect(() => {
+    SFTPApi.getFolders().then(res => {
+      console.log(res);
+      setExplorer(res);
+    });
+  }, []);
 
   return (
     <Sidebar
@@ -58,10 +68,38 @@ function _AddEditSFTPGoSidebar({
           <div className="text-bold mb1">{t`Subscription Name:`}</div>
           <Input
             type="text"
-            className="full"
+            fullWidth
+            className="my1"
             value={channel.subscription_name}
             onChange={e =>
               onChannelPropertyChange("subscription_name", e.target.value)
+            }
+          />
+        </div>
+        <div
+          className="my2 p2"
+          style={{
+            border: "1px solid #e0e0e0",
+          }}
+        >
+          <div className="text-bold mb1">{t`Folder Path:`}</div>
+          <Input
+            fullWidth
+            disabled
+            className="mb1"
+            value={channel.subscription_folder_path}
+            onChange={e =>
+              onChannelPropertyChange(
+                "subscription_folder_path",
+                e.target.value,
+              )
+            }
+          />
+          <FolderTree
+            files={explorer}
+            selectedFolderPath={channel.subscription_folder_path || ""}
+            setSelectedFolderPath={path =>
+              onChannelPropertyChange("subscription_folder_path", path)
             }
           />
         </div>

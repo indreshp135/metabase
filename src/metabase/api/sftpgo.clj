@@ -27,7 +27,7 @@
 
 
 #_{:clj-kondo/ignore [:deprecated-var]}
-(api/defendpoint GET "/get-folder-tree"
+(api/defendpoint GET "/folders"
   "Get the folder tree from SFTPGo"
   []
   (sftpgo/get-folder-tree "."))

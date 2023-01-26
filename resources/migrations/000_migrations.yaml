@@ -14014,6 +14014,16 @@ databaseChangeLog:
                   constraints:
                     nullable: true
 
+        - addColumn:
+            tableName: pulse_channel
+            columns:
+              - column:
+                  name: subscription_folder_path
+                  type: varchar(255)
+                  remarks: The folder path of the subscription
+                  constraints:
+                    nullable: true
+
 # >>>>>>>>>> DO NOT ADD NEW MIGRATIONS BELOW THIS LINE! ADD THEM ABOVE <<<<<<<<<<
 
 ########################################################################################################################

@@ -204,6 +204,7 @@ export const SlackApi = {
 
 export const SFTPApi = {
   updateSettings: PUT("/api/sftpgo/settings"),
+  getFolders: GET("/api/sftpgo/folders"),
 };
 
 export const LdapApi = {

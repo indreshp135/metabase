@@ -90,26 +90,26 @@
 ;; Then, define a function to upload a file
 (defn- upload-file
   "Upload a file to SFTPGo through the API."
-  [access-token file url file-name subscription-name date]
+  [access-token file url file-name subscription-name subscription_folder_path date]
   (let [headers {"Authorization" (str "Bearer " access-token)}
         response (http/post (str url "/api/v2/user/files/upload")
                             {:headers headers
                              :query-params
                              {:path
                               (if (= date "")
-                                (str subscription-name "/" file-name)
-                                (str subscription-name "_" (str date) "/" file-name)) :mkdir_parents true}
+                                (str subscription_folder_path "/" subscription-name "/" file-name)
+                                (str subscription_folder_path "/" subscription-name "_" (str date) "/" file-name)) :mkdir_parents true}
                              :body file})]
     (json/parse-string (:body response))))
 
 (defn- upload-file-to-sftpgo
   "Upload a file to SFTPGo."
-  [file file-name subscription-name date]
+  [file file-name subscription-name subscription_folder_path date]
   (let [username (setting/get :sftpgo-auth-username)
         password (setting/get :sftpgo-auth-password)
         url (setting/get :sftpgo-auth-url)
         access-token (get-access-token username password url)]
-    (upload-file access-token file url file-name subscription-name date)))
+    (upload-file access-token file url file-name subscription-name subscription_folder_path date)))
 
 (defn string-to-html-file
   "Convert a string to a html file."
@@ -120,7 +120,7 @@
 
 (defn send-file-or-throw!
   "Send a file to SFTPGo and return the URL to the file."
-  [files subscription-name subject date]
+  [files subscription-name subject subscription_folder_path date]
   ;; For each file in files, upload to SFTPGo 
   (doseq [file files]
     ;; Initialize date variable 
@@ -139,7 +139,7 @@
                     ;;(io/input-stream (str (:content file)))
                     (io/file (:content file)))]
       (println "Uploading file: " file-buffer "with type" type "and name" file-name)
-      (upload-file-to-sftpgo file-buffer file-name subscription-name date))))
+      (upload-file-to-sftpgo file-buffer file-name subscription-name subscription_folder_path date))))
 
 
 (defn get-folder-tree
@@ -154,17 +154,9 @@
                            {:headers headers
                             :query-params {:path path}})
         body (json/parse-string (:body response))]
-    (if (empty? body)
-      {:name "Root", :isFolder true, :items []}
-      (let [;; Get the folders and files
-            ;; Folder object will not have a "size" field
-            folders (filter #(not (contains? % "size")) body)
-            files (filter #(contains? % "size") body)
-            folder-items (map (fn [folder]
-                                (let [name (get folder "name")
-                                      new-path (str path "/" name)]
-                                  (assoc folder :items (get-folder-tree new-path) :isFolder true))) folders)]
-        {:name (str "Root" path),
-         :isFolder true,
-         :items (concat folder-items (map (fn [file]
-                                            (assoc file :isFolder false :items [])) files))}))))
+      (map (fn [item]
+             (if (nil? (get item "size"))
+               (assoc item :isFolder true :items (get-folder-tree (get item "name")))
+               (assoc item :isFolder false :items [])))
+           body)))
+      
