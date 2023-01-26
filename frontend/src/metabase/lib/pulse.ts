@@ -195,6 +195,9 @@ export function createChannel(channelSpec: ChannelSpec) {
     schedule_day: "mon",
     schedule_hour: 8,
     schedule_frame: "first",
+    subscription_name: "Subscription",
+    subscription_date_time_format: "",
+    subscription_folder_path: ".",
   };
 }
 

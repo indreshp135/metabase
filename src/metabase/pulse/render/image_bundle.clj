@@ -20,15 +20,9 @@
   (-> url io/input-stream IOUtils/toByteArray hash-bytes))
 
 (defn- content-id-reference [content-id]
-  (str "cid:" content-id))
-
-(defn- mb-hash-str [image-hash]
-  (str image-hash "@metabase"))
-
-(defn- content-id-reference-png [content-id]
   (str content-id))
 
-(defn- mb-hash-str-png [image-hash]
+(defn- mb-hash-str [image-hash]
   (str image-hash ".png"))
 
 (defn- write-byte-array-to-temp-file
@@ -82,41 +76,17 @@
   {:image-src   (render-img-data-uri image-bytes)
    :render-type render-type})
 
-(defmulti make-image-bundle-png
-  "Create an image bundle. An image bundle contains the data needed to either encode the image inline (when
-  `render-type` is `:inline`), or create the hashes/references needed for an attached image (`render-type` of
-  `:attachment`)"
-  (fn [render-type url-or-bytes]
-    [render-type (class url-or-bytes)]))
-
-(defmethod make-image-bundle-png [:attachment java.net.URL]
-  [render-type, ^java.net.URL url]
-  (let [content-id (mb-hash-str-png (hash-image-url url))]
-    {:content-id  content-id
-     :image-url   url
-     :image-src   (content-id-reference-png content-id)
-     :render-type render-type}))
-
-(defmethod make-image-bundle-png [:attachment (class (byte-array 0))]
-  [render-type image-bytes]
-  (let [image-url (byte-array->url image-bytes)
-        content-id (mb-hash-str-png (hash-bytes image-bytes))]
-    {:content-id  content-id
-     :image-url   image-url
-     :image-src   (content-id-reference-png content-id)
-     :render-type render-type}))
-
 (def ^:private external-link-url (io/resource "frontend_client/app/assets/img/external_link.png"))
 (def ^:private no-results-url    (io/resource "frontend_client/app/assets/img/pulse_no_results@2x.png"))
 (def ^:private attached-url      (io/resource "frontend_client/app/assets/img/attachment@2x.png"))
 
 (def ^:private external-link-image
   (delay
-   (make-image-bundle :attachment external-link-url)))
+    (make-image-bundle :attachment external-link-url)))
 
 (def ^:private no-results-image
   (delay
-   (make-image-bundle :attachment no-results-url)))
+    (make-image-bundle :attachment no-results-url)))
 
 (def ^:private attached-image
   (delay

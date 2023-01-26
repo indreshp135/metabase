@@ -154,9 +154,9 @@
                            {:headers headers
                             :query-params {:path path}})
         body (json/parse-string (:body response))]
-      (map (fn [item]
-             (if (nil? (get item "size"))
-               (assoc item :isFolder true :items (get-folder-tree (get item "name")))
-               (assoc item :isFolder false :items [])))
-           body)))
-      
+    (map (fn [item]
+           (if (nil? (get item "size"))
+             (assoc item :isFolder true :items (get-folder-tree (str path "/" (get item "name"))))
+             (assoc item :isFolder false :items [])))
+         body)))
+
