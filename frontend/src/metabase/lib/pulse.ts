@@ -198,6 +198,7 @@ export function createChannel(channelSpec: ChannelSpec) {
     subscription_name: "Subscription",
     subscription_date_time_format: "",
     subscription_folder_path: ".",
+    connection: "",
   };
 }
 

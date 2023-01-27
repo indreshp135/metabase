@@ -59,8 +59,8 @@
                              {k v})
                            (apply merge defaults {:collection_id collection-id}))]
     (u/prog1 notification
-      (assert-valid-parameters notification)
-      (collection/check-collection-namespace Pulse (:collection_id notification)))))
+             (assert-valid-parameters notification)
+             (collection/check-collection-namespace Pulse (:collection_id notification)))))
 
 (def ^:dynamic *allow-moving-dashboard-subscriptions*
   "If true, allows the collection_id on a dashboard subscription to be modified. This should
@@ -79,8 +79,8 @@
                (not= (:dashboard_id notification) dashboard_id))
       (throw (ex-info (tru "dashboard ID of a dashboard subscription cannot be modified") notification))))
   (u/prog1 notification
-    (assert-valid-parameters notification)
-    (collection/check-collection-namespace Pulse (:collection_id notification))))
+           (assert-valid-parameters notification)
+           (collection/check-collection-namespace Pulse (:collection_id notification))))
 
 (defn- alert->card
   "Return the Card associated with an Alert, fetching it if needed, for permissions-checking purposes."
@@ -146,13 +146,13 @@
              (current-user-is-creator? notification)))))
 
 (mi/define-methods
- Pulse
- {:hydration-keys (constantly [:pulse])
-  :properties     (constantly {::mi/timestamped? true
-                               ::mi/entity-id    true})
-  :pre-insert     pre-insert
-  :pre-update     pre-update
-  :types          (constantly {:parameters :json})})
+  Pulse
+  {:hydration-keys (constantly [:pulse])
+   :properties     (constantly {::mi/timestamped? true
+                                ::mi/entity-id    true})
+   :pre-insert     pre-insert
+   :pre-update     pre-update
+   :types          (constantly {:parameters :json})})
 
 (defmethod serdes.hash/identity-hash-fields Pulse
   [_pulse]
@@ -201,8 +201,8 @@
             :dashboard_id       (s/maybe su/IntGreaterThanZero)
             :parameter_mappings (s/maybe [su/Map])})
     (deferred-tru "value must be a map with the following keys `({0})`"
-      (str/join ", " ["collection_id" "description" "display" "id" "include_csv" "include_xls" "name"
-                      "dashboard_id" "parameter_mappings"]))))
+                  (str/join ", " ["collection_id" "description" "display" "id" "include_csv" "include_xls" "name"
+                                  "dashboard_id" "parameter_mappings"]))))
 
 (def CoercibleToCardRef
   "Schema for functions accepting either a `HybridPulseCard` or `CardRef`."
@@ -441,15 +441,16 @@
   ;;      existing list of PulseChannels pulled from the db to ensure we affect the right record
   (let [channel (when new-channel
                   (assoc new-channel
-                         :pulse_id       (u/the-id notification-or-id)
-                         :id             (:id existing-channel)
-                         :enabled        (:enabled new-channel)
-                         :channel_type   (keyword (:channel_type new-channel))
-                         :schedule_type  (keyword (:schedule_type new-channel))
-                         :schedule_frame (keyword (:schedule_frame new-channel)) 
+                         :pulse_id                       (u/the-id notification-or-id)
+                         :id                             (:id existing-channel)
+                         :enabled                        (:enabled new-channel)
+                         :channel_type                   (keyword (:channel_type new-channel))
+                         :schedule_type                  (keyword (:schedule_type new-channel))
+                         :schedule_frame                 (keyword (:schedule_frame new-channel))
                          :subscription_date_time_format  (:subscription_date_time_format new-channel)
-                         :subscription_folder_path (:subscription_folder_path new-channel)
-                         :subscription_name (:subscription_name new-channel)))]
+                         :subscription_folder_path       (:subscription_folder_path new-channel)
+                         :connection                     (:connection new-channel)
+                         :subscription_name              (:subscription_name new-channel)))]
     (cond
       ;; 1. in channels, NOT in db-channels = CREATE
       (and channel (not existing-channel))  (pulse-channel/create-pulse-channel! channel)
@@ -472,12 +473,12 @@
   [notification-or-id channels :- [su/Map]]
   (let [new-channels   (group-by (comp keyword :channel_type) channels)
         old-channels   (group-by (comp keyword :channel_type) (db/select PulseChannel
-                                                                :pulse_id (u/the-id notification-or-id)))
+                                                                         :pulse_id (u/the-id notification-or-id)))
         handle-channel #(create-update-delete-channel! (u/the-id notification-or-id)
                                                        (first (get new-channels %))
                                                        (first (get old-channels %)))]
     (assert (zero? (count (get new-channels nil)))
-      "Cannot have channels without a :channel_type attribute")
+            "Cannot have channels without a :channel_type attribute")
     ;; don't automatically archive this Pulse if we end up deleting its last PulseChannel -- we're probably replacing
     ;; it with a new one immediately thereafter.
     (binding [*automatically-archive-when-last-channel-is-deleted* false]
@@ -490,10 +491,10 @@
   add the Notification to `channels`. Returns the `id` of the newly created Notification."
   [notification card-refs :- (s/maybe [CardRef]) channels]
   (db/transaction
-    (let [notification (db/insert! Pulse notification)]
-      (update-notification-cards! notification card-refs)
-      (update-notification-channels! notification channels)
-      (u/the-id notification))))
+   (let [notification (db/insert! Pulse notification)]
+     (update-notification-cards! notification card-refs)
+     (update-notification-channels! notification channels)
+     (u/the-id notification))))
 
 (s/defn create-pulse!
   "Create a new Pulse by inserting it into the database along with all associated pieces of data such as:
@@ -526,8 +527,8 @@
 (s/defn ^:private notification-or-id->existing-card-refs :- [CardRef]
   [notification-or-id]
   (db/select [PulseCard [:card_id :id] :include_csv :include_xls :dashboard_card_id]
-    :pulse_id (u/the-id notification-or-id)
-    {:order-by [[:position :asc]]}))
+             :pulse_id (u/the-id notification-or-id)
+             {:order-by [[:position :asc]]}))
 
 (s/defn ^:private card-refs-have-changed? :- s/Bool
   [notification-or-id, new-card-refs :- [CardRef]]
@@ -553,9 +554,9 @@
                     (s/optional-key :archived)            s/Bool
                     (s/optional-key :parameters)          [su/Map]}]
   (db/update! Pulse (u/the-id notification)
-    (u/select-keys-when notification
-      :present [:collection_id :collection_position :archived]
-      :non-nil [:name :alert_condition :alert_above_goal :alert_first_only :skip_if_empty :parameters]))
+              (u/select-keys-when notification
+                                  :present [:collection_id :collection_position :archived]
+                                  :non-nil [:name :alert_condition :alert_above_goal :alert_first_only :skip_if_empty :parameters]))
   ;; update Cards if the 'refs' have changed
   (when (contains? notification :cards)
     (update-notification-cards-if-changed! notification (map card->ref (:cards notification))))
@@ -603,9 +604,9 @@
 
 (defmethod serdes.base/load-xform "Pulse" [pulse]
   (cond-> (serdes.base/load-xform-basics pulse)
-      true                   (update :creator_id    serdes.util/import-user)
-      (:collection_id pulse) (update :collection_id serdes.util/import-fk 'Collection)
-      (:dashboard_id  pulse) (update :dashboard_id  serdes.util/import-fk 'Dashboard)))
+    true                   (update :creator_id    serdes.util/import-user)
+    (:collection_id pulse) (update :collection_id serdes.util/import-fk 'Collection)
+    (:dashboard_id  pulse) (update :dashboard_id  serdes.util/import-fk 'Dashboard)))
 
 (defmethod serdes.base/serdes-dependencies "Pulse" [{:keys [collection_id dashboard_id]}]
   (filterv some? [(when collection_id [{:model "Collection" :id collection_id}])

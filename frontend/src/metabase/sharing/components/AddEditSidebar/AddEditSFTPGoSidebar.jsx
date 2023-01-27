@@ -26,7 +26,6 @@ function _AddEditSFTPGoSidebar({
   formInput,
   channel,
   channelSpec,
-  users,
   parameters,
   defaultParametersById,
   dashboard,
@@ -44,11 +43,21 @@ function _AddEditSFTPGoSidebar({
 }) {
   const isValid = dashboardPulseIsValid(pulse, formInput.channels);
   const [explorer, setExplorer] = useState([]);
+  const [connections, setConnections] = useState([]);
 
   useEffect(() => {
-    SFTPApi.getFolders().then(res => {
-      console.log(res);
-      setExplorer(res);
+    SFTPApi.getConnections().then(res => {
+      setConnections(
+        res.map(item => {
+          return {
+            name: item.name,
+            value: item.name,
+          };
+        }),
+      );
+      SFTPApi.getFolders({ connection: res[0].name }).then(res => {
+        setExplorer(res);
+      });
     });
   }, []);
 
@@ -63,7 +72,7 @@ function _AddEditSFTPGoSidebar({
         <Heading>{t`SFTP this dashboard`}</Heading>
       </div>
       <CaveatMessage />
-      <div className="my2 px4">
+      <div className="my2 px2">
         <div>
           <div className="text-bold mb1">{t`Subscription Name:`}</div>
           <Input
@@ -76,6 +85,22 @@ function _AddEditSFTPGoSidebar({
             }
           />
         </div>
+        <div>
+          <div className="text-bold mb1">{t`Connection Name:`}</div>
+          <Select
+            options={connections}
+            type="text"
+            fullWidth
+            className="my1"
+            value={channel.connection}
+            onChange={e => {
+              SFTPApi.getFolders({ connection: e.target.value }).then(res => {
+                setExplorer(res);
+              });
+              onChannelPropertyChange("connection", e.target.value);
+            }}
+          />
+        </div>
         <div
           className="my2 p2"
           style={{
@@ -85,7 +110,6 @@ function _AddEditSFTPGoSidebar({
           <div className="text-bold mb1">{t`Folder Path:`}</div>
           <Input
             fullWidth
-            disabled
             className="mb1"
             value={channel.subscription_folder_path}
             onChange={e =>

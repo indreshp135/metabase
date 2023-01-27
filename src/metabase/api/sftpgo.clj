@@ -11,25 +11,24 @@
 #_{:clj-kondo/ignore [:deprecated-var]}
 (api/defendpoint-schema PUT "/settings"
   "Update SFTPGo related settings. You must be a superuser or have `setting` permission to do this."
-  [:as {{:keys [sftpgo-auth-url
-                sftpgo-auth-enabled
-                sftpgo-auth-username
-                sftpgo-auth-password]} :body}]
-  {sftpgo-auth-url                         (s/maybe s/Str)
-   sftpgo-auth-enabled                     (s/maybe s/Bool)
-   sftpgo-auth-username                    (s/maybe s/Str)
-   sftpgo-auth-password                    (s/maybe s/Str)}
+  [:as {{:keys [sftpgo-auth-connections]} :body}]
+  (println "sftpgo-auth-connections" sftpgo-auth-connections)
+  {sftpgo-auth-connections                (s/maybe [s/Str])}
   (db/transaction
-   (setting/set-many! {:sftpgo-auth-url                         sftpgo-auth-url
-                       :sftpgo-auth-username                    sftpgo-auth-username
-                       :sftpgo-auth-password                    sftpgo-auth-password})
-   (sftpgo/sftpgo-auth-enabled! sftpgo-auth-enabled)))
+   (let [valid-connections (filter #(and (:url %) (:username %) (:password %) (:name %)) sftpgo-auth-connections)]
+     (setting/set-many! {:sftpgo-auth-connections                valid-connections
+                         :sftpgo-auth-enabled                    (not-empty valid-connections)})
+     (sftpgo/sftpgo-auth-enabled! (not-empty valid-connections)))))
 
+(api/defendpoint GET "/connections"
+  "Get the SFTPGo connections."
+  []
+  (setting/get :sftpgo-auth-connections))
 
-#_{:clj-kondo/ignore [:deprecated-var]}
 (api/defendpoint GET "/folders"
   "Get the folder tree from SFTPGo"
-  []
-  (sftpgo/get-folder-tree "."))
+                 ;; print all query parameters
+  [& query-params]
+  (sftpgo/get-folder-tree "." (:connection query-params)))
 
 (api/define-routes)

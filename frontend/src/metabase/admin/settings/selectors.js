@@ -231,28 +231,8 @@ const SECTIONS = updateSectionsWithPlugins({
     component: SFTPGoAuthForm,
     settings: [
       {
-        key: "sftpgo-auth-url",
+        key: "sftpgo-auth-connections",
         display_name: t`SFTPGo URL`,
-        placeholder: "http://localhost:8080",
-        type: "string",
-        required: true,
-        autoFocus: true,
-      },
-      {
-        key: "sftpgo-auth-user",
-        display_name: t`SFTPGo User`,
-        placeholder: "admin",
-        type: "string",
-        required: true,
-        autoFocus: true,
-      },
-      {
-        key: "sftpgo-auth-password",
-        display_name: t`SFTPGo Password`,
-        placeholder: "admin",
-        type: "password",
-        required: true,
-        autoFocus: true,
       },
       {
         key: "sftpgo-auth-enabled",

@@ -14024,6 +14024,16 @@ databaseChangeLog:
                   constraints:
                     nullable: true
 
+        - addColumn:
+            tableName: pulse_channel
+            columns:
+              - column:
+                  name: connection
+                  type: varchar(255)
+                  remarks: The connection for which the subscription is created
+                  constraints:
+                    nullable: true
+
 # >>>>>>>>>> DO NOT ADD NEW MIGRATIONS BELOW THIS LINE! ADD THEM ABOVE <<<<<<<<<<
 
 ########################################################################################################################

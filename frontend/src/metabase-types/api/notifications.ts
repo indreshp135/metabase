@@ -15,6 +15,7 @@ export type Channel = {
   schedule_hour?: number | null;
   schedule_type?: "hourly" | "daily" | "weekly" | "monthly";
   subscription_name?: string;
+  connection: string;
   subscription_folder_path?: string;
   subscription_date_time_format?: string;
 };

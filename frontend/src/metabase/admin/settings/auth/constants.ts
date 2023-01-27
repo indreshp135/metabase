@@ -21,18 +21,17 @@ export const GOOGLE_SCHEMA = Yup.object({
 
 export const SFTPGO_SCHEMA = Yup.object({
   "sftpgo-auth-enabled": Yup.boolean().nullable().default(false),
-  "sftpgo-auth-url": Yup.string()
+  "sftpgo-auth-connections": Yup.array()
+    .of(
+      Yup.object({
+        url: Yup.string().nullable().default(""),
+        username: Yup.string().nullable().default(""),
+        password: Yup.string().nullable().default(""),
+        name: Yup.string().nullable().default(""),
+      }),
+    )
     .nullable()
-    .default(null)
-    .when(["sftpgo-auth-enabled", "$sftpgo-auth-url"], REQUIRED_SCHEMA),
-  "sftpgo-auth-username": Yup.string()
-    .nullable()
-    .default(null)
-    .when(["sftpgo-auth-enabled", "$sftpgo-auth-username"], REQUIRED_SCHEMA),
-  "sftpgo-auth-password": Yup.string()
-    .nullable()
-    .default(null)
-    .when(["sftpgo-auth-enabled", "$sftpgo-auth-password"], REQUIRED_SCHEMA),
+    .default(null),
 });
 
 export const LDAP_SCHEMA = Yup.object({

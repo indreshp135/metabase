@@ -4,46 +4,20 @@
    [cheshire.core :as json]
    [clj-http.client :as http]
    [clojure.java.io :as io]
-   [clojure.string :as str]
    [metabase.models.setting :as setting :refer [defsetting]]
    [metabase.util.i18n :refer [tru deferred-tru]]))
 
-;; SFTPGo has only username and password and no client id or secret. It is enabled if username and password are set and url.
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
-(defsetting sftpgo-auth-username
-  (deferred-tru "Username for SFTPGo Sign-In.")
+(defsetting sftpgo-auth-connections
+  (deferred-tru "SFTPGo connections.")
   :visibility :public
-  :setter     (fn [username]
-                (if (seq username)
-                  (let [trimmed-username (str/trim username)]
-                    (setting/set-value-of-type! :string :sftpgo-auth-username trimmed-username))
+  :type       :json
+  :setter     (fn [sftp-connections]
+                (if (some #(and (:username %) (:name %) (:password %) (:url %)) sftp-connections)
+                  (setting/set-value-of-type! :json :sftpgo-auth-connections sftp-connections)
                   (do
-                    (setting/set-value-of-type! :string :sftpgo-auth-username nil)
-                    (setting/set-value-of-type! :boolean :sftpgo-auth-enabled false)))))
-
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
-(defsetting sftpgo-auth-password
-  (deferred-tru "Password for SFTPGo Sign-In.")
-  :visibility :public
-  :setter     (fn [password]
-                (if (seq password)
-                  (let [trimmed-password (str/trim password)]
-                    (setting/set-value-of-type! :string :sftpgo-auth-password trimmed-password))
-                  (do
-                    (setting/set-value-of-type! :string :sftpgo-auth-password nil)
-                    (setting/set-value-of-type! :boolean :sftpgo-auth-enabled false)))))
-
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
-(defsetting sftpgo-auth-url
-  (deferred-tru "URL for SFTPGo Sign-In.")
-  :visibility :public
-  :setter     (fn [url]
-                (if (seq url)
-                  (let [trimmed-url (str/trim url)]
-                    (setting/set-value-of-type! :string :sftpgo-auth-url trimmed-url))
-                  (do
-                    (setting/set-value-of-type! :string :sftpgo-auth-url nil)
-                    (setting/set-value-of-type! :boolean :sftpgo-auth-enabled false)))))
+                    (setting/set-value-of-type! :json :sftpgo-auth-connections [])
+                    (throw (Exception. (tru "SFTPGo is not configured.")))))))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defsetting sftpgo-auth-enabled
@@ -51,16 +25,13 @@
   :visibility :public
   :type       :boolean
   :getter     (fn []
-                (if (and (setting/get :sftpgo-auth-username)
-                         (setting/get :sftpgo-auth-password)
-                         (setting/get :sftpgo-auth-url))
-                  true
-                  false))
+                (let [sftp-connections (setting/get :sftpgo-auth-connections)]
+                  (if (some #(and (:username %) (:name %) (:password %) (:url %)) sftp-connections)
+                    true
+                    false)))
   :setter     (fn [enabled]
                 (if enabled
-                  (if (and (setting/get :sftpgo-auth-username)
-                           (setting/get :sftpgo-auth-password)
-                           (setting/get :sftpgo-auth-url))
+                  (if (some #(and (:username %) (:name %) (:password %) (:url %)) (setting/get :sftpgo-auth-connections))
                     (setting/set-value-of-type! :boolean :sftpgo-auth-enabled true)
                     (do
                       (setting/set-value-of-type! :boolean :sftpgo-auth-enabled false)
@@ -104,10 +75,12 @@
 
 (defn- upload-file-to-sftpgo
   "Upload a file to SFTPGo."
-  [file file-name subscription-name subscription_folder_path date]
-  (let [username (setting/get :sftpgo-auth-username)
-        password (setting/get :sftpgo-auth-password)
-        url (setting/get :sftpgo-auth-url)
+  [file file-name subscription-name subscription_folder_path date connection-name]
+  (let [sftp-connections (setting/get :sftpgo-auth-connections)
+        connection (first (filter #(= (:name %) connection-name) sftp-connections))
+        url (:url connection)
+        username (:username connection)
+        password (:password connection)
         access-token (get-access-token username password url)]
     (upload-file access-token file url file-name subscription-name subscription_folder_path date)))
 
@@ -120,7 +93,7 @@
 
 (defn send-file-or-throw!
   "Send a file to SFTPGo and return the URL to the file."
-  [files subscription-name subject subscription_folder_path date]
+  [files subscription-name subject subscription_folder_path date connection-name]
   ;; For each file in files, upload to SFTPGo 
   (doseq [file files]
     ;; Initialize date variable 
@@ -139,24 +112,29 @@
                     ;;(io/input-stream (str (:content file)))
                     (io/file (:content file)))]
       (println "Uploading file: " file-buffer "with type" type "and name" file-name)
-      (upload-file-to-sftpgo file-buffer file-name subscription-name subscription_folder_path date))))
+      (upload-file-to-sftpgo file-buffer file-name subscription-name subscription_folder_path date connection-name))))
 
-
-(defn get-folder-tree
-  "Get the folder tree from SFTPGo."
-  [path]
-  (let [url (setting/get :sftpgo-auth-url)
-        username (setting/get :sftpgo-auth-username)
-        password (setting/get :sftpgo-auth-password)
-        access-token (get-access-token username password url)
-        headers {"Authorization" (str "Bearer " access-token)}
-        response (http/get (str url "/api/v2/user/dirs")
+(defn get-folder-tree-recursive
+  "Get the folder tree from SFTPGo recursively."
+  [path url headers]
+  (let [response (http/get (str url "/api/v2/user/dirs")
                            {:headers headers
                             :query-params {:path path}})
         body (json/parse-string (:body response))]
     (map (fn [item]
            (if (nil? (get item "size"))
-             (assoc item :isFolder true :items (get-folder-tree (str path "/" (get item "name"))))
+             (assoc item :isFolder true :items (get-folder-tree-recursive (str path "/" (get item "name")) url headers))
              (assoc item :isFolder false :items [])))
          body)))
 
+(defn get-folder-tree
+  "Get the folder tree from SFTPGo."
+  [path connection-name]
+  (let [sftp-connections (setting/get :sftpgo-auth-connections)
+        connection (first (filter #(= (:name %) connection-name) sftp-connections))
+        url (:url connection)
+        username (:username connection)
+        password (:password connection)
+        access-token (get-access-token username password url)
+        headers {"Authorization" (str "Bearer " access-token)}]
+    (get-folder-tree-recursive path url headers)))

@@ -152,6 +152,13 @@ export interface SettingDefinition {
   value?: unknown;
 }
 
+export interface Connections {
+  url: string;
+  username: string;
+  password: string;
+  name: string;
+}
+
 export interface Settings {
   "admin-email": string;
   "anon-tracking-enabled": boolean;
@@ -179,9 +186,7 @@ export interface Settings {
   "google-auth-configured": boolean;
   "google-auth-enabled": boolean;
   "sftpgo-auth-enabled": boolean;
-  "sftpgo-auth-username": string | null;
-  "sftpgo-auth-password": string | null;
-  "sftpgo-auth-url": string | null;
+  "sftpgo-auth-connections": Connections[] | null;
   "has-user-setup": boolean;
   "hide-embed-branding?": boolean;
   "is-hosted?": boolean;
