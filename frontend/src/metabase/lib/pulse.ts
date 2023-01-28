@@ -42,7 +42,14 @@ export function channelIsValid(channel: Channel, channelSpec: ChannelSpec) {
         scheduleIsValid(channel)
       );
     case "sftpgo":
-      return true;
+      return (
+        channel.subscription_name &&
+        channel.connection &&
+        channel.subscription_date_time_format &&
+        channel.subscription_folder_path &&
+        fieldsAreValid(channel, channelSpec) &&
+        scheduleIsValid(channel)
+      );
     default:
       return false;
   }
